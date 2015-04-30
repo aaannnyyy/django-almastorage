@@ -21,6 +21,8 @@ Quick Install
 	SW_AUTH_URL = 'http://your_url' //auth_url 
 
 4) Make migration
+
+	./manage.py schemamigration almastorage --initial
 	
 	./manage.py migrate almastorage
 
