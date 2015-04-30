@@ -16,7 +16,7 @@ setup(
     url='https://github.com/aaannnyyy/django-almastorage',
     author='Nurlan Abyken',
     author_email='abyken.nurlan@gmail.com',
-    install_requires=['django>=1.6', 'python-swiftclient'],
+    install_requires=['django>=1.5', 'python-swiftclient'],
     zip_safe=False,
     classifiers=[
         'Environment :: Web Environment',
