@@ -22,5 +22,5 @@ Quick Install
 
 4) Make migration
 	
-	./manage.py migrate
+	./manage.py migrate almastorage
 
