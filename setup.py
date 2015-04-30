@@ -14,8 +14,8 @@ setup(
     description='A simple Django app to use SwiftStack Storage',
     long_description=README,
     url='https://github.com/aaannnyyy/django-almastorage',
-    author='Christian Schwede',
-    author_email='info@cschwede.de',
+    author='Nurlan Abyken',
+    author_email='abyken.nurlan@gmail.com',
     install_requires=['django>=1.6', 'python-swiftclient'],
     zip_safe=False,
     classifiers=[
