@@ -8,7 +8,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='django-almastorage',
-    version='0.0.2',
+    version='0.1',
     packages=['almastorage'],
     include_package_data=True,
     description='A simple Django app to use SwiftStack Storage',
@@ -16,7 +16,7 @@ setup(
     url='https://github.com/aaannnyyy/django-almastorage',
     author='Nurlan Abyken',
     author_email='abyken.nurlan@gmail.com',
-    install_requires=['django>=1.5', 'python-swiftclient'],
+    install_requires=['django>=1.5', 'python-swiftclient', 'django-tastypie', 'requests'],
     zip_safe=False,
     classifiers=[
         'Environment :: Web Environment',

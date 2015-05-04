@@ -13,9 +13,9 @@ USER_MODEL = settings.AUTH_USER_MODEL
 DEFAULT_CONTAINER_TITLE = 'Main_container'
 
 class SwiftContainer(models.Model):
-	title = models.CharField(max_length=255)
-	service_slug = models.CharField('service slug', max_length=30, unique=True, blank=False)
-	date_created = models.DateTimeField(auto_now=True, auto_now_add=True)
+	title = models.CharField(max_length=255, default = DEFAULT_CONTAINER_TITLE)
+	service_slug = models.CharField('service slug', max_length=30, unique=True, blank=False, default = USERNAME)
+	date_created = models.DateTimeField(auto_now_add=True)
 
 	class Meta:
 		db_table = 'sw_container'
@@ -30,6 +30,18 @@ class SwiftContainer(models.Model):
 	def create_default_container(cls):
 		try:
 			container = cls(title=DEFAULT_CONTAINER_TITLE, service_slug=USERNAME)
+			conn = swiftclient.Connection(user=USERNAME, key=KEY, authurl=AUTH_URL)
+			conn.put_container(container.title)
+			container.save()
+		except swiftclient.ClientException:
+			raise Exception("Access denied")
+
+		return container
+
+	@classmethod 
+	def create_container(cls, title):
+		try:
+			container = cls(title=title, service_slug=USERNAME)
 			conn = swiftclient.Connection(user=USERNAME, key=KEY, authurl=AUTH_URL)
 			conn.put_container(container.title)
 			container.save()
@@ -65,7 +77,7 @@ class SwiftFile(models.Model):
 		verbose_name_plural = 'sw_files'
 
 	def __unicode__(self):
-		return filename
+		return self.filename
 
 	@classmethod
 	def upload_file(cls, file_contents, filename, content_type,  author=None):
