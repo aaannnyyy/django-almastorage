@@ -76,7 +76,6 @@ class SwiftFileResource(ModelResource):
 		except swiftclient.ClientException:
 			return http.HttpUnauthorized("You are not authorized in stackswift service, \
 				please, make sure that you add your username and key to your settings")
-
 		return self.create_response(
 			request, {
 				'temp_url': temp_url

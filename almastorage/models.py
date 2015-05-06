@@ -63,12 +63,15 @@ class SwiftContainer(models.Model):
 
 
 class SwiftFile(models.Model):
-	date_created = models.DateTimeField()
+	date_created = models.DateTimeField(auto_now_add=True)
 	filename = models.CharField(max_length=255)
 	author = models.ForeignKey(USER_MODEL, verbose_name='user', related_name='files_set', blank=True, null=True)
 	filesize = models.IntegerField(blank=True, null=True)
 	content_type = models.CharField(max_length=100)
 	container = models.ForeignKey('SwiftContainer', related_name='files')
+	date_modified = models.DateTimeField(auto_now=True, default=datetime.now())
+	temp_url = models.CharField(max_length=255)
+	key = models.CharField(max_length=40)
 
 	class Meta:
 		db_table = 'sw_file'
@@ -77,24 +80,23 @@ class SwiftFile(models.Model):
 		verbose_name_plural = 'sw_files'
 
 	def __unicode__(self):
-		return self.filename
+		return self.filename 
 
 	@classmethod
 	def upload_file(cls, file_contents, filename, content_type,  author=None):
-		date = datetime.now()
-		f = cls(author=author, date_created=date)
-		new_filename = filename.split('.')[0]+'_'+date.strftime('%H:%M:%S-%Y-%m-%d').__str__()+'.'+filename.split('.')[1]
+		f = cls(author=author)
+		f.filename=filename
+		f.content_type=content_type
+		f.key = f.generate_key()
 		try:
 			container = SwiftContainer.objects.get(title=DEFAULT_CONTAINER_TITLE, service_slug=USERNAME)
 		except SwiftContainer.DoesNotExist:
 			container = SwiftContainer.create_default_container()
 		try:
 			conn = swiftclient.Connection(user=USERNAME, key=KEY, authurl=AUTH_URL)
-			conn.put_object(container.title, new_filename, contents=file_contents, content_type=content_type)
+			conn.put_object(container.title, f.key, contents=file_contents, content_type=content_type)
 		except swiftclient.ClientException:
 			raise Exception("Access denied")
-		f.filename=filename
-		f.content_type=content_type
 		f.container = container
 		f.save()
 		return f
@@ -105,23 +107,40 @@ class SwiftFile(models.Model):
 
 
 	def get_temp_download_url(self):
-		filename = self.filename.split('.')[0]+'_'+self.date_created.strftime('%H:%M:%S-%Y-%m-%d').__str__()+'.'+self.filename.split('.')[1]
 		try:
 			conn = swiftclient.Connection(user=USERNAME, 
 											key=KEY, authurl=AUTH_URL)
-			url = utils.get_temp_url(connection = conn, filename=filename, container=self.container.title)
+			url = utils.get_temp_url(connection = conn, filename=self.key, container=self.container.title, expires=7 * 24 * 3600)
 		except swiftclient.ClientException:
 			raise Exception("Access denied")
 		return url
 
 	def delete(self, **kwargs):
-		filename = self.filename.split('.')[0]+'_'+self.date_created.strftime('%H:%M:%S-%Y-%m-%d').__str__()+'.'+self.filename.split('.')[1]
 		try:
 			conn = swiftclient.Connection(user=USERNAME, 
 											key=KEY, authurl=AUTH_URL)
-			conn.delete_object(self.container.title, filename)
+			conn.delete_object(self.container.title, self.key)
 		except swiftclient.ClientException:
 			raise Exception("Access denied")
 		super(self.__class__, self).delete(**kwargs)
+
+	def generate_key(self):
+		import hashlib, random
+		salt = hashlib.sha1(str(random.random())).hexdigest()[:5]
+		filename = str(self.filename)
+		if isinstance(filename, unicode):
+			filename = filename.encode('utf-8')
+		content_type = str(self.content_type)
+		if isinstance(content_type, unicode):
+			content_type = content_type.encode('utf-8')
+		key = hashlib.sha1(salt+filename+content_type).hexdigest()
+
+		return key
+
+	def save(self, **kwargs):
+		self.temp_url = self.get_temp_download_url()
+		if not self.key:
+			self.key = self.generate_key()
+		super(self.__class__, self).save(**kwargs)
 
 

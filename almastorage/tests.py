@@ -136,7 +136,6 @@ class AlmastorageResourceTest(ResourceTestCase):
 			conn = swiftclient.Connection(user=USERNAME, key=KEY, authurl=AUTH_URL)
 			_m, objects = conn.get_container(DEFAULT_CONTAINER_TITLE)
 			# self.assertEqual(len(objects), 1)
-
 			resp = self.api_client.get(self.api_path_files+str(des_resp['file']['id'])+'/download/',
 										format='json')
 			des_resp = self.deserialize(resp)
