@@ -82,6 +82,13 @@ class SwiftFile(models.Model):
 	def __unicode__(self):
 		return self.filename 
 
+	@property
+	def url(self):
+		if (self.date_modified.replace(tzinfo=None) - datetime.now()).days > 5:
+			self.temp_url = get_temp_download_url()
+			self.save()
+		return self.temp_url
+
 	@classmethod
 	def upload_file(cls, file_contents, filename, content_type,  author=None):
 		f = cls(author=author)
