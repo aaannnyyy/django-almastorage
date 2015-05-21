@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 import swiftclient
 from datetime import datetime
 from django.conf import settings
-import utils
+from .utils import temp_generator
 
 USERNAME = settings.SW_USERNAME
 KEY = settings.SW_KEY
@@ -117,7 +117,7 @@ class SwiftFile(models.Model):
 		try:
 			conn = swiftclient.Connection(user=USERNAME, 
 											key=KEY, authurl=AUTH_URL)
-			url = utils.get_temp_url(connection = conn, filename=self.key, container=self.container.title, expires=7 * 24 * 3600)
+			url = temp_generator.get_temp_url(connection = conn, filename=self.key, container=self.container.title, expires=7 * 24 * 3600)
 		except swiftclient.ClientException:
 			raise Exception("Access denied")
 		return url
