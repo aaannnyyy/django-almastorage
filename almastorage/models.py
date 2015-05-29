@@ -141,7 +141,17 @@ class SwiftFile(models.Model):
 		if isinstance(content_type, unicode):
 			content_type = content_type.encode('utf-8')
 		key = hashlib.sha1(salt+filename+content_type).hexdigest()
-
+		try:
+			splited_filename = filename.split(".")
+			if len(splited_filename) > 1:
+				type_suffix = splited_filename[-1]
+			else:
+				type_suffix = ""
+		except Exception:
+			type_suffix = ""
+		finally:
+			if len(type_suffix) != 0:
+				key = key + "." + type_suffix
 		return key
 
 	def save(self, **kwargs):

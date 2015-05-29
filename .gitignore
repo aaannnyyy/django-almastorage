@@ -7,3 +7,5 @@ venv
 .coverage
 pids
 logs
+django_almastorage.egg-info/*
+dist/*
