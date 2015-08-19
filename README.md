@@ -36,8 +36,8 @@ Quick Install
 
 ========
 You can download it directly from storage, but in that case your filename will be some key generated
-from your filename and uploaded date. For download you can use 'download' view from views.py, just append to
-your urls url(r'^files', include('almastorage.urls')), and then download using swiftfile id, 'http://your_domain/files/download/(?P<file_id>[0-9]+)/'
+from your filename and uploaded date. For download you can use 'download' view from views.py, just 
+append to your urls url(r'^files', include('almastorage.urls')), and then download using swiftfile id, 'http://your_domain/files/download/(?P<file_id>[0-9]+)/'
 ========
 Use API for upload: http://yourdomain/api/v1/storage/:SW_USERNAME/upload/ 
 	post_data={
