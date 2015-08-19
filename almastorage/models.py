@@ -14,7 +14,7 @@ DEFAULT_CONTAINER_TITLE = 'Main_container'
 
 class SwiftContainer(models.Model):
 	title = models.CharField(max_length=255, default = DEFAULT_CONTAINER_TITLE)
-	service_slug = models.CharField('service slug', max_length=30, unique=True, blank=False, default = USERNAME)
+	service_slug = models.CharField('service slug', max_length=30, blank=False, default = USERNAME)
 	date_created = models.DateTimeField(auto_now_add=True)
 
 	class Meta:
@@ -90,15 +90,15 @@ class SwiftFile(models.Model):
 		return self.temp_url
 
 	@classmethod
-	def upload_file(cls, file_contents, filename, content_type,  author=None):
+	def upload_file(cls, file_contents, filename, content_type,  author=None, container_title = DEFAULT_CONTAINER_TITLE):
 		f = cls(author=author)
 		f.filename=filename
 		f.content_type=content_type
 		f.key = f.generate_key()
 		try:
-			container = SwiftContainer.objects.get(title=DEFAULT_CONTAINER_TITLE, service_slug=USERNAME)
+			container = SwiftContainer.objects.get(title=container_title, service_slug=USERNAME)
 		except SwiftContainer.DoesNotExist:
-			container = SwiftContainer.create_default_container()
+			container = SwiftContainer.create_container(title=container_title)
 		try:
 			conn = swiftclient.Connection(user=USERNAME, key=KEY, authurl=AUTH_URL)
 			conn.put_object(container.title, f.key, contents=file_contents, content_type=content_type)
@@ -107,6 +107,11 @@ class SwiftFile(models.Model):
 		f.container = container
 		f.save()
 		return f
+
+	def download(self):
+		conn = swiftclient.Connection(user=USERNAME, key=KEY, authurl=AUTH_URL)
+		obj_tuple = conn.get_object(self.container.title, self.key)
+		return obj_tuple
 
 	@classmethod
 	def search_files(cls, filename):
@@ -127,31 +132,22 @@ class SwiftFile(models.Model):
 			conn = swiftclient.Connection(user=USERNAME, 
 											key=KEY, authurl=AUTH_URL)
 			conn.delete_object(self.container.title, self.key)
-		except swiftclient.ClientException:
-			raise Exception("Access denied")
+		except swiftclient.ClientException as e:
+			raise Exception(e.message)
 		super(self.__class__, self).delete(**kwargs)
 
 	def generate_key(self):
 		import hashlib, random
 		salt = hashlib.sha1(str(random.random())).hexdigest()[:5]
-		filename = str(self.filename)
+		filename = self.filename.encode('utf-8')
+		filename = str(filename)
 		if isinstance(filename, unicode):
 			filename = filename.encode('utf-8')
 		content_type = str(self.content_type)
 		if isinstance(content_type, unicode):
 			content_type = content_type.encode('utf-8')
-		key = hashlib.sha1(salt+filename+content_type).hexdigest()
-		try:
-			splited_filename = filename.split(".")
-			if len(splited_filename) > 1:
-				type_suffix = splited_filename[-1]
-			else:
-				type_suffix = ""
-		except Exception:
-			type_suffix = ""
-		finally:
-			if len(type_suffix) != 0:
-				key = key + "." + type_suffix
+		date_created = datetime.now().strftime("%I:%M%p %B %d, %Y")
+		key = hashlib.sha1(salt+filename+content_type+date_created).hexdigest()
 		return key
 
 	def save(self, **kwargs):
