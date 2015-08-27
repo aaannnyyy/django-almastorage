@@ -84,8 +84,8 @@ class SwiftFile(models.Model):
 
 	@property
 	def url(self):
-		if (self.date_modified.replace(tzinfo=None) - datetime.now()).days > 5:
-			self.temp_url = get_temp_download_url()
+		if (datetime.now() - self.date_modified.replace(tzinfo=None)).days > 2:
+			self.temp_url = self.get_temp_download_url()
 			self.save()
 		return self.temp_url
 
