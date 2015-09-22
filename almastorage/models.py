@@ -65,7 +65,6 @@ class SwiftContainer(models.Model):
 class SwiftFile(models.Model):
 	date_created = models.DateTimeField(auto_now_add=True)
 	filename = models.CharField(max_length=255)
-	author = models.ForeignKey(USER_MODEL, verbose_name='user', related_name='files_set', blank=True, null=True)
 	filesize = models.IntegerField(blank=True, null=True)
 	content_type = models.CharField(max_length=100)
 	container = models.ForeignKey('SwiftContainer', related_name='files')
@@ -90,8 +89,8 @@ class SwiftFile(models.Model):
 		return self.temp_url
 
 	@classmethod
-	def upload_file(cls, file_contents, filename, content_type,  author=None, container_title = DEFAULT_CONTAINER_TITLE):
-		f = cls(author=author)
+	def upload_file(cls, file_contents, filename, content_type, container_title = DEFAULT_CONTAINER_TITLE, filesize=None):
+		f = cls()
 		f.filename=filename
 		f.content_type=content_type
 		f.key = f.generate_key()
@@ -105,6 +104,7 @@ class SwiftFile(models.Model):
 		except swiftclient.ClientException:
 			raise Exception("Access denied")
 		f.container = container
+		f.filesize = filesize
 		f.save()
 		return f
 
