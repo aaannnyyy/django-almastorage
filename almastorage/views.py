@@ -27,6 +27,14 @@ from .models import USERNAME, KEY, AUTH_URL
 #         pass
 
 def download_file(request, file_id):
+	'''
+		TODO downloads file from storage and set into http response, 
+		set filename of file in response[content-disposition]
+
+		Returns 
+		-------------
+		response - http response 
+	'''
     if request.method == 'GET':
         base_file = SwiftFile.objects.get(id=file_id)
         obj_tuple = base_file.download()

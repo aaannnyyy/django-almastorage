@@ -28,6 +28,11 @@ class SwiftContainer(models.Model):
 
 	@classmethod 
 	def create_default_container(cls):
+		"""TODO Creates default container with title Main_container.
+        Returns
+        --------
+            container - SwiftContainer object
+        """
 		try:
 			container = cls(title=DEFAULT_CONTAINER_TITLE, service_slug=USERNAME)
 			conn = swiftclient.Connection(user=USERNAME, key=KEY, authurl=AUTH_URL)
@@ -40,6 +45,11 @@ class SwiftContainer(models.Model):
 
 	@classmethod 
 	def create_container(cls, title):
+		"""TODO Creates container with title from argument title.
+        Returns
+        --------
+            container - SwiftContainer object
+        """
 		try:
 			container = cls(title=title, service_slug=USERNAME)
 			conn = swiftclient.Connection(user=USERNAME, key=KEY, authurl=AUTH_URL)
@@ -51,7 +61,10 @@ class SwiftContainer(models.Model):
 		return container
 
 	def delete(self, **kwargs):
-		try:
+		"""
+			TODO Delete container on storage server, with all files within container.
+        """	
+        try:
 			conn = swiftclient.Connection(user=USERNAME, key=KEY, authurl=AUTH_URL)
 			_m, objects = conn.get_container(self.title)
 			for obj in objects:
@@ -83,6 +96,12 @@ class SwiftFile(models.Model):
 
 	@property
 	def url(self):
+		"""TODO creates new temp_url if modified date > 2.
+        
+        Returns
+        --------
+            url - url string
+        """
 		if (datetime.now() - self.date_modified.replace(tzinfo=None)).days > 2:
 			self.temp_url = self.get_temp_download_url()
 			self.save()
@@ -90,6 +109,15 @@ class SwiftFile(models.Model):
 
 	@classmethod
 	def upload_file(cls, file_contents, filename, content_type, container_title = DEFAULT_CONTAINER_TITLE, filesize=None):
+		"""
+		TODO upload file to the storage.
+        if container with title container_title from argument exists,
+        then creates new container then push file into the container.
+
+        Returns
+        --------
+            file - SwiftFile object
+        """
 		f = cls()
 		f.filename=filename
 		f.content_type=content_type
@@ -109,16 +137,37 @@ class SwiftFile(models.Model):
 		return f
 
 	def download(self):
+		'''
+			TODO downloads object tuple.
+			Returns
+        --------
+            tuple - file tuple
+		'''
+
 		conn = swiftclient.Connection(user=USERNAME, key=KEY, authurl=AUTH_URL)
 		obj_tuple = conn.get_object(self.container.title, self.key)
 		return obj_tuple
 
 	@classmethod
 	def search_files(cls, filename):
+		'''
+			TODO searchs file within all storage.
+
+			Returns
+		---------
+			list - SwiftFile objects list
+		'''
 		return cls.objects.filter(filename__startswith=filename)
 
 
 	def get_temp_download_url(self):
+		'''
+			TODO generates temprary url for the object
+
+			Returns
+			------------
+			url - string
+		'''
 		try:
 			conn = swiftclient.Connection(user=USERNAME, 
 											key=KEY, authurl=AUTH_URL)
@@ -128,6 +177,9 @@ class SwiftFile(models.Model):
 		return url
 
 	def delete(self, **kwargs):
+		"""
+			TODO Deletes file on storage server.
+        """	
 		try:
 			conn = swiftclient.Connection(user=USERNAME, 
 											key=KEY, authurl=AUTH_URL)
@@ -137,6 +189,14 @@ class SwiftFile(models.Model):
 		super(self.__class__, self).delete(**kwargs)
 
 	def generate_key(self):
+		'''
+			TODO generates key, it will be user as filename in the storage,
+			generates from salt, filename, date created and content type.
+
+			Returns
+			----------
+			key - string
+		'''
 		import hashlib, random
 		salt = hashlib.sha1(str(random.random())).hexdigest()[:5]
 		filename = self.filename.encode('utf-8')
@@ -151,6 +211,9 @@ class SwiftFile(models.Model):
 		return key
 
 	def save(self, **kwargs):
+		'''
+			TODO generates self temprary url, and set key if not.
+		'''
 		self.temp_url = self.get_temp_download_url()
 		if not self.key:
 			self.key = self.generate_key()
